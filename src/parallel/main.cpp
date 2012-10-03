@@ -12,14 +12,15 @@ Matrix load(char *fname)
 	FILE *fp = fopen(fname, "r");
 	if (!fp) printf(">>> Error opening file: %s\n", fname);
 
-	int n_cells = 1, x_size = 0, y_size = 0;
+	int n_cells = 1, x_size = 0, y_size = 1;
 
-	while (fgetc(fp) != '\n') x_size ++;
+	char c = 0;
+	while ((c = fgetc(fp)) != '\n' && c != '\r') x_size ++;
 	while (fgetc(fp) != EOF) n_cells ++;
 
 	y_size = (int) n_cells / x_size;
 	
-	//printf(">>> Params: {x_size = %d, y_size = %d}\n", x_size, y_size);
+	printf(">>> Params: {x_size = %d, y_size = %d}\n", x_size, y_size);
 
 	fclose(fp);
 
@@ -109,6 +110,7 @@ int main(int argc, char ** argv)
 		{
 			case 'L':
 			{	
+				printf("I'm (0) here! (000)\n");
 				game = new GameOfLife(load(argv[FILENAME]), numtasks, n_generations);							
 				break;
 			}
@@ -126,21 +128,24 @@ int main(int argc, char ** argv)
     
     for (int gen = 0; gen < node->n_generations(); gen ++)
     {        
-        printf("I'm (%d) here (B)!\n", rank);
+        //printf("I'm (%d) here (B)!\n", rank);
         
-        if (rank == 0) printf("\n>>> Generation %d\n", gen + 1);
+        if (rank == 0) printf("\n>>> Generation %d ----------------------------------------------\n", gen + 1);
         
     	node->iterate();
     }
 
-    //printf("I'm (%d) here (A)!\n", rank);
+    printf("I'm (%d) here (A)!\n", rank);
     
     node->end();
     
-    //printf("I'm (%d) here (Y)!\n", rank);
+    printf("I'm (%d) here (Y)!\n", rank);
 
     if (rank == 0) game->end();
+    
+    printf("I'm (%d) here (YY)!\n", rank);
 
     MPI_Finalize();
+
     return 0;
 }

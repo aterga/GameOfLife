@@ -8,6 +8,19 @@
 
 #include "life_tools.h"
 
+enum NEIGHBOR {
+	TOP,
+	TOP_RIGHT,
+	RIGHT,
+	BOTTOM_RIGHT,
+	BOTTOM,
+	BOTTOM_LEFT,
+	LEFT,
+	TOP_LEFT,
+	
+	N_NEIGHBORS
+};
+
 enum MES_TAGS {
     DEBUG,
     
@@ -31,25 +44,31 @@ enum MES_TAGS {
     
     N_GENERATIONS,
     
-    MASS
+    MASS,
+    NEIGHBORS,
+    
+    REDUNDANCE
 };
 
 class Node {
 
 private:
     Matrix *field_;
-    int     x_pos_,     y_pos_, 
+    int *neighbors_;
+    int     x_pos_,     y_pos_,
         max_x_pos_, max_y_pos_,
         rank_, gen_, n_gens_;
-    bool is_redundant_;
+    bool is_redundant_, one_col_, one_row_;
     
     short int count(int x, int y);
     inline void count();
+    /*
     inline int rank(int x_pos, int y_pos)
     {
     	return (x_pos < 0? max_x_pos_-1 : (x_pos >= max_x_pos_? 0: x_pos))
     	      +(y_pos < 0? max_y_pos_-1 : (y_pos >= max_y_pos_? 0: y_pos)) * max_x_pos_;
     }
+    */
     void send();
     void receive();
 
@@ -60,7 +79,7 @@ public:
     
     void print()
     {
-    	printf(">>> Node#%d ", rank_, field_->size_x(), field_->size_y());
+    	printf(">>> Generation %d of Node#%d ", gen_, rank_);
 		field_->print();
 		printf("\n");
     }
@@ -81,7 +100,7 @@ public:
     	
     	gen_ ++;
     	
-    	printf(">>> Node's #%d generation %d\n", rank_, gen_);
+    	//printf(">>> Node's #%d generation %d\n", rank_, gen_);
     	
 		count();
 		send();
