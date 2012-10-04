@@ -9,7 +9,7 @@ GameOfLife::GameOfLife(int X, int Y, int N_nodes, int N_generations)
     redundant_nodes_ = new std::map<int, bool>;
     
     init();
-    print();
+	print();
     linear_split();
 }
 
@@ -31,6 +31,7 @@ GameOfLife::~GameOfLife()
     delete node_x_size_;
     delete node_y_size_;
     delete redundant_nodes_;
+    printf("I'm (%d) here (RRRR)!\n", 0);
 }
 
 void GameOfLife::init()
@@ -158,6 +159,7 @@ int GameOfLife::find_neighbor(int my_x, bool right_not_left)
 
 void GameOfLife::linear_split()
 {
+
     // Strategy:
     n_x_nodes_ = n_nodes_;
     printf("     n_x_nodes_ = %d\n", n_x_nodes_);
@@ -166,7 +168,7 @@ void GameOfLife::linear_split()
     int workload_per_node = 0;
     int zero_node_workload = 0;
     
-	std::vector<Matrix *> jbuf(n_nodes_);
+	std::map<int, Matrix *> jbuf;
     
     if (n_nodes_ > field_->size_x())
     {
@@ -217,8 +219,10 @@ void GameOfLife::linear_split()
         (*redundant_nodes_)[0] = true;
     }
     
-    printf("zero_node_workload = %d\nworkload_per_node = %d\n", zero_node_workload, workload_per_node);
+
     
+    printf("zero_node_workload = %d\nworkload_per_node = %d\n", zero_node_workload, workload_per_node);
+
     if (workload_per_node >= 0)
     {   
         int n_actual_nodes = n_nodes_;
@@ -242,30 +246,34 @@ void GameOfLife::linear_split()
         				 x < zero_node_workload +  n      * workload + 1;
         			 loc_x ++, x ++)
         		{
+        	
         		/*
         		printf(">>> Params: {x = %d, y = %d,  get(x, y) = get(%d, %d)}\n",
         			   x, y, x>field_->size_x()-1? 0 : x, y>=0? (y < field_->size_y()? y : 0)
         							: (field_->size_y()-1));
         		printf(">>> Param: {workload_per_node = %d, zero_node_workload = %d}\n", workload_per_node, zero_node_workload);
         		*/
+        	
         			if (field_->get(x>=0? (x < field_->size_x()? x : 0)
         								: field_->size_x()-1,
         							y>=0? (y < field_->size_y()? y : 0)
         								: field_->size_y()-1) == ALIVE)
         			{
-        				(jbuf[n])->set(loc_x, y + 1, ALIVE);
+        				jbuf[n]->set(loc_x, y + 1, ALIVE);
         			}
         			else
         			{
-        				(jbuf[n])->set(loc_x, y + 1, DEAD);
+        				jbuf[n]->set(loc_x, y + 1, DEAD);
         			}
         		}
+        	
         	}
         	    
         	(*node_x_size_)[std::pair<int, int>(n, 0)] = workload;
         	(*node_y_size_)[std::pair<int, int>(n, 0)] = field_->size_y();
                 	        	
             (*redundant_nodes_)[n] = false;
+        	
         }
         
         for (int n = n_actual_nodes + 1; n < n_nodes_; n ++)
@@ -307,7 +315,7 @@ void GameOfLife::linear_split()
 		delete neighbors;
 		delete jbuf[0];
 	}
-            
+
     for (int n = 1; n < n_nodes_; n ++)
     {
     	if ((*redundant_nodes_)[n])
@@ -317,20 +325,25 @@ void GameOfLife::linear_split()
 	    }    
 
         int *neighbors = new int[N_NEIGHBORS]();
+        
+		int right_nei = find_neighbor(n, true);
+		int left_nei = find_neighbor(n, false);
         	
 		neighbors[TOP] = n;
 		neighbors[BOTTOM] = n;
-		neighbors[TOP_RIGHT] = find_neighbor(n, true);
-		neighbors[RIGHT] = find_neighbor(n, true);
-		neighbors[BOTTOM_RIGHT] = find_neighbor(n, true);
-		neighbors[BOTTOM_LEFT] = find_neighbor(n, false);
-		neighbors[LEFT] = find_neighbor(n, false);
-		neighbors[TOP_LEFT] = find_neighbor(n, false);
+		
+		neighbors[TOP_RIGHT] = right_nei;
+		neighbors[RIGHT] = right_nei;
+		neighbors[BOTTOM_RIGHT] = right_nei;
+
+		neighbors[BOTTOM_LEFT] = left_nei;
+		neighbors[LEFT] = left_nei;
+		neighbors[TOP_LEFT] = left_nei;
 		
 		send_init_data(n, n, 0, workload + 2, field_->size_y() + 2, neighbors, (jbuf[n])->data());
 	
 		delete neighbors;
-		delete jbuf[n];
+		//delete jbuf[n];
     }
 }
 

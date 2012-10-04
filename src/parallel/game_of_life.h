@@ -56,7 +56,7 @@ public:
 	void end()
 	{
 		collect();
-		//printf("I'm (%d) here (R)!\n", 0);
+		printf("I'm (%d) here (R)!\n", 0);
 		print();
 		delete this;
 	}

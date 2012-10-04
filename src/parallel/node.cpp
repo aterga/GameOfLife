@@ -39,6 +39,9 @@ Node::Node(int rank)
 	one_row_ = neighbors_[TOP] == rank_;
 	one_col_ = neighbors_[RIGHT] == rank_;
 
+	//printf("    The World contains %s column(s)\n", one_col_ ? "one" : "plenty");
+	//printf("    The World contains %s row(s)\n", one_row_ ? "one" : "plenty");
+
 	//if (neighbors_[TOP] == rank_) printf(">>> My (%d) top neighbor is me!\n", rank_);
 	//if (neighbors_[BOTTOM] == rank_) printf(">>> My (%d) bottom neighbor is me!\n", rank_);
 	//if (neighbors_[LEFT] == rank_) printf(">>> My (%d) left neighbor is me!\n", rank_);
@@ -129,7 +132,7 @@ void Node::send()
 	
 	printf("I'm (%d) here (TT)! And my neighbors are:\n", rank_);
 	for (int i = 0 ; i < N_NEIGHBORS; i ++) printf("#%d: rank %d\n", i, neighbors_[i]);
-					
+			
 	if (!(one_row_ && one_col_))
 	{
 		MPI_Send(inmat->angle_nw(), 1, MPI_INT, neighbors_[TOP_LEFT],     ANGLE_SE_TO_NW, MPI_COMM_WORLD);
@@ -184,6 +187,7 @@ void Node::receive()
 	LIFE *xbordbuf = new LIFE[xbordsize],
 		 *ybordbuf = new LIFE[ybordsize];
 
+
 	if (!(one_row_ && one_col_))
 	{	
 		LIFE lbuf = DEAD;
@@ -223,7 +227,8 @@ void Node::receive()
 		
 		MPI_Recv(xbordbuf, xbordsize, MPI_INT, neighbors_[BOTTOM], BORDER_BOTTOM_TO_TOP, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		for (int x = 0; x < xbordsize; x ++) field_->set(x+1, field_->size_y()-1, xbordbuf[x]);
-	}	
+	}
+	
 
 	delete xbordbuf;
 	delete ybordbuf;
