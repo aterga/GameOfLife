@@ -128,21 +128,21 @@ int main(int argc, char ** argv)
     {        
         //printf("I'm (%d) here (B)!\n", rank);
         
-        if (rank == 0) printf("\n>>> Generation %d ----------------------------------------------\n", gen + 1);
+        //if (rank == 0) printf("\n>>> Generation %d ----------------------------------------------\n", gen + 1);
         
     	node->iterate();
     }
     
 
-    printf("I'm (%d) here (A)!\n", rank);
+    //printf("I'm (%d) here (A)!\n", rank);
     
     node->end();
     
-    printf("I'm (%d) here (Y)!\n", rank);
+    //printf("I'm (%d) here (Y)!\n", rank);
 
     if (rank == 0) game->end();
     
-    printf("I'm (%d) here (YY)!\n", rank);
+    //printf("I'm (%d) here (YY)!\n", rank);
 
     MPI_Finalize();
     return 0;

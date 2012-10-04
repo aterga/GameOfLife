@@ -3,13 +3,13 @@
 Node::Node(int rank)
 : neighbors_ (new int[N_NEIGHBORS]()), rank_ (rank), gen_ (0), n_gens_ (0), is_redundant_ (false)
 {
-    printf("I'm (%d) here (D)!\n", rank);
+    //printf("I'm (%d) here (D)!\n", rank);
     
     MPI_Recv(&is_redundant_, 1, MPI_INT, 0, REDUNDANCE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     
     if (is_redundant_)
 	{
-		printf("I'm (%d) here (-1)!\n", rank);
+		//printf("I'm (%d) here (-1)!\n", rank);
 		is_redundant_ = true;
 		return;
 	}
@@ -20,17 +20,17 @@ Node::Node(int rank)
 	MPI_Recv(&max_y_pos_, 1, MPI_INT, 0, NODE_MAX_Y_POS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	MPI_Recv(&n_gens_, 1, MPI_INT, 0, N_GENERATIONS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	
-	printf("I'm (%d) here (I)!\n", rank);
+	//printf("I'm (%d) here (I)!\n", rank);
 	
 	int x_size = 0, y_size = 0;
 	MPI_Recv(&x_size, 1, MPI_INT, 0, NODE_X_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	MPI_Recv(&y_size, 1, MPI_INT, 0, NODE_Y_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	
-	printf("I'm (%d) here (E)!\n", rank);
+	//printf("I'm (%d) here (E)!\n", rank);
 	
 	if (x_size * y_size == 0)
 	{
-		printf("I'm (%d) here (1)!\n", rank);
+		//printf("I'm (%d) here (1)!\n", rank);
 		is_redundant_ = true;
 		return;
 	}
@@ -50,21 +50,21 @@ Node::Node(int rank)
 	LIFE *loc_job = new LIFE[x_size * y_size]();//alloc_mass(x_size * y_size, DEAD);
 	MPI_Recv(loc_job, x_size * y_size, MPI_INT, 0, MASS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	
-	printf("I'm (%d) here (H)!\n", rank);
+	//printf("I'm (%d) here (H)!\n", rank);
 	
 	field_ = new Matrix(x_size, y_size, loc_job);
 	free(loc_job);
 
 	//if (rank_ == 1) print();
 	
-	printf("I'm (%d) here (F)!\n", rank);
+	//printf("I'm (%d) here (F)!\n", rank);
 }
 
 Node::~Node()
 {
 	if (!is_redundant_) delete field_;
 	
-	printf("I'm (%d) here (Z)!\n", rank_);
+	//printf("I'm (%d) here (Z)!\n", rank_);
 }
 
 void Node::end()
@@ -75,7 +75,7 @@ void Node::end()
 	}
 	
 	delete this;
-	printf("I'm (%d) here (X)!\n", rank_);
+	//printf("I'm (%d) here (X)!\n", rank_);
 }
 
 short int Node::count(int x, int y)
@@ -94,8 +94,8 @@ short int Node::count(int x, int y)
 
 inline void Node::count()
 {
-	printf("I'm (%d) here (S)!\n", rank_);
-	if (rank_ < 2) print();
+	//printf("I'm (%d) here (S)!\n", rank_);
+	//if (rank_ < 2) print();
 
 	Matrix buf = *field_;
 	
@@ -120,7 +120,7 @@ inline void Node::count()
 	delete field_;
 	field_ = new Matrix(buf);
 	
-	if (rank_ < 2) print();
+	//if (rank_ < 2) print();
 }
 
 void Node::send()
@@ -130,8 +130,8 @@ void Node::send()
 	//print();
 	//inmat->print();
 	
-	printf("I'm (%d) here (TT)! And my neighbors are:\n", rank_);
-	for (int i = 0 ; i < N_NEIGHBORS; i ++) printf("#%d: rank %d\n", i, neighbors_[i]);
+	//printf("I'm (%d) here (TT)! And my neighbors are:\n", rank_);
+	//for (int i = 0 ; i < N_NEIGHBORS; i ++) printf("#%d: rank %d\n", i, neighbors_[i]);
 			
 	if (!(one_row_ && one_col_))
 	{
@@ -179,7 +179,7 @@ void Node::send()
 
 void Node::receive()
 {
-	printf("I'm (%d) here (ZZZ_1)!\n", rank_);
+	//printf("I'm (%d) here (ZZZ_1)!\n", rank_);
 
 	int xbordsize = field_->size_x() - 2,
 		ybordsize = field_->size_y() - 2;
@@ -233,5 +233,5 @@ void Node::receive()
 	delete xbordbuf;
 	delete ybordbuf;
 
-	printf("I'm (%d) here (ZZZ_2)!\n", rank_);
+	//printf("I'm (%d) here (ZZZ_2)!\n", rank_);
 }

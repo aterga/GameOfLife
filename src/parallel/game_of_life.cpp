@@ -31,7 +31,7 @@ GameOfLife::~GameOfLife()
     delete node_x_size_;
     delete node_y_size_;
     delete redundant_nodes_;
-    printf("I'm (%d) here (RRRR)!\n", 0);
+    //printf("I'm (%d) here (RRRR)!\n", 0);
 }
 
 void GameOfLife::init()
@@ -56,7 +56,7 @@ void GameOfLife::collect()
 
     Matrix *submat = NULL;
     
-    printf("I'm (%d) here (J)!\n", rank);
+    //printf("I'm (%d) here (J)!\n", rank);
     		
     for (int n_y = 0; n_y < n_y_nodes_; n_y ++)
     {
@@ -118,7 +118,7 @@ void GameOfLife::collect()
     	}
     }
     
-    printf("I'm (%d) here (Q)!\n", rank);
+    //printf("I'm (%d) here (Q)!\n", rank);
 }
 
 void GameOfLife::send_init_data(int target_rank, int x_pos, int y_pos, int x_size, int y_size, int *neighbors, LIFE *jbuf)
@@ -151,9 +151,11 @@ int GameOfLife::find_neighbor(int my_x, bool right_not_left)
 { // Geekie Coddie
     int nei = right_not_left ? (my_x + 1) % n_x_nodes_
                              : (my_x != 0 ? (my_x - 1) : n_x_nodes_ - 1);
-    if (my_x == 10) printf("            my_x = 10, nei = %d, n_x_nodes_ = %d, (my_x + 1) mod n_x_nodes_ = %d, (*redundant_nodes_)[nei] = %d\n",
-                           nei, n_x_nodes_, (my_x + 1) % n_x_nodes_, (*redundant_nodes_)[nei]);
-    if ((*redundant_nodes_)[nei]) return find_neighbor(right_not_left ? my_x+1 : my_x-1, right_not_left);
+                             
+    if ((*redundant_nodes_)[nei]) printf("            my_x = %d, nei = %d, n_x_nodes_ = %d, (my_x != 0 ? (my_x - 1) : n_x_nodes_ - 1) = %d, (*redundant_nodes_)[nei] = %d\n",
+                           my_x, nei, n_x_nodes_, (my_x != 0 ? (my_x - 1) : n_x_nodes_ - 1), (*redundant_nodes_)[nei]);
+
+    if ((*redundant_nodes_)[nei]) return find_neighbor(/*right_not_left ? nei : my_x-1*/nei, right_not_left);
     return nei;
 }
 
@@ -162,7 +164,7 @@ void GameOfLife::linear_split()
 
     // Strategy:
     n_x_nodes_ = n_nodes_;
-    printf("     n_x_nodes_ = %d\n", n_x_nodes_);
+    //printf("     n_x_nodes_ = %d\n", n_x_nodes_);
     n_y_nodes_ = 1;
 
     int workload_per_node = 0;
@@ -278,7 +280,6 @@ void GameOfLife::linear_split()
         
         for (int n = n_actual_nodes + 1; n < n_nodes_; n ++)
         {
-        	printf("Extra nodes found! (#%d)\n", n);
             (*redundant_nodes_)[n] = true;
         }
     }
@@ -328,6 +329,8 @@ void GameOfLife::linear_split()
         
 		int right_nei = find_neighbor(n, true);
 		int left_nei = find_neighbor(n, false);
+		
+		if (n == 1) printf("left_nei = %d\n", left_nei);
         	
 		neighbors[TOP] = n;
 		neighbors[BOTTOM] = n;
@@ -343,7 +346,7 @@ void GameOfLife::linear_split()
 		send_init_data(n, n, 0, workload + 2, field_->size_y() + 2, neighbors, (jbuf[n])->data());
 	
 		delete neighbors;
-		//delete jbuf[n];
+		delete jbuf[n];
     }
 }
 
