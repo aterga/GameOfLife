@@ -55,9 +55,7 @@ void GameOfLife::collect()
     int x_inc = 0, y_inc = 0, rank = 0;
 
     Matrix *submat = NULL;
-    
-    //printf("I'm (%d) here (J)!\n", rank);
-    		
+        		
     for (int n_y = 0; n_y < n_y_nodes_; n_y ++)
     {
     	for (int n_x = 0; n_x < n_x_nodes_; n_x ++)
@@ -65,30 +63,20 @@ void GameOfLife::collect()
     		rank = n_y * n_x_nodes_ + n_x;
     		
     		if ((*redundant_nodes_)[rank]) continue;
-    	
-    		//printf("I'm (%d) here (K)!\n", rank);
-    			
+    	    			
     		int x_size = (*node_x_size_)[std::pair<int, int>(n_x, n_y)],
     			y_size = (*node_y_size_)[std::pair<int, int>(n_x, n_y)];
     			
     		if (x_size * y_size == 0) continue;
-    			
-    		//printf(">>> Node #%d@(%dX%d) is as large as (%dX%d)\n", rank, n_x, n_y, x_size, y_size);
-    		//if (x_size == 0) printf(">>> Node #%d is redundant\n", rank);
-
+    		
     		LIFE *loc_job = alloc_mass(x_size * y_size, DEAD);
     		
-    		//printf(">>> Main Node: waiting for Node #%d\n", rank);
     		MPI_Recv(loc_job, x_size * y_size, MPI_INT, rank, MASS + rank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     		submat = new Matrix(x_size, y_size, loc_job);
-    		
-    		//printf("I'm (%d) here (L)!\n", rank);
-    	
+    		    	
     		free(loc_job);
-    		
-    		//submat->print();
-    						
+    		    						
     		for (int y = 0; y < y_size; y ++)
     		{
     			for (int x = 0; x < x_size; x ++)
@@ -96,35 +84,28 @@ void GameOfLife::collect()
     				field_->set(x + x_inc, y + y_inc, submat->get(x, y));
     			}
     		}
-    		
-    		//printf("I'm (%d) here (M)!\n", rank);
-    		
+    		    		
     		if (rank != 0 && rank % n_x_nodes_ == 0)
     		{
     			x_inc = 0;
     			y_inc += y_size;
-    			
-    			//printf("I'm (%d) here (N)!\n", rank);
     		}
     		else
     		{
     			x_inc += x_size;
-    			//printf("I'm (%d) here (O)!\n", rank);
     		}
-    		
-    		//printf("I'm (%d) here (P)!\n", rank);
-    		
+    		    		
     		delete submat;
     	}
     }
-    
-    //printf("I'm (%d) here (Q)!\n", rank);
 }
 
 void GameOfLife::send_init_data(int target_rank, int x_pos, int y_pos, int x_size, int y_size, int *neighbors, LIFE *jbuf)
 {    
 	bool red = (*redundant_nodes_)[target_rank];
-    printf("Node#%d is %s\n", target_rank, red ? "redundant!" : "not redundant!");
+	
+    //printf("Node#%d is %s\n", target_rank, red ? "redundant!" : "not redundant!");
+    
     if (red)
     {
     	MPI_Send(&red, 1, MPI_INT, target_rank, REDUNDANCE, MPI_COMM_WORLD);
@@ -132,7 +113,6 @@ void GameOfLife::send_init_data(int target_rank, int x_pos, int y_pos, int x_siz
     }
     MPI_Send(&red, 1, MPI_INT, target_rank, REDUNDANCE, MPI_COMM_WORLD);
 
-    //printf(">>> Main Node: sending following data to Node #%d: {x_pos=%d, y_pos=%d, x_size=%d, y_size=%d}\n", target_rank, x_pos, y_pos, x_size, y_size);
     // Job split data
     MPI_Send(&x_pos, 1, MPI_INT, target_rank, NODE_X_POS, MPI_COMM_WORLD);
     MPI_Send(&y_pos, 1, MPI_INT, target_rank, NODE_Y_POS, MPI_COMM_WORLD);
@@ -151,20 +131,15 @@ int GameOfLife::find_neighbor(int my_x, bool right_not_left)
 { // Geekie Coddie
     int nei = right_not_left ? (my_x + 1) % n_x_nodes_
                              : (my_x != 0 ? (my_x - 1) : n_x_nodes_ - 1);
-                             
-    if ((*redundant_nodes_)[nei]) printf("            my_x = %d, nei = %d, n_x_nodes_ = %d, (my_x != 0 ? (my_x - 1) : n_x_nodes_ - 1) = %d, (*redundant_nodes_)[nei] = %d\n",
-                           my_x, nei, n_x_nodes_, (my_x != 0 ? (my_x - 1) : n_x_nodes_ - 1), (*redundant_nodes_)[nei]);
-
-    if ((*redundant_nodes_)[nei]) return find_neighbor(/*right_not_left ? nei : my_x-1*/nei, right_not_left);
+                    
+    if ((*redundant_nodes_)[nei]) return find_neighbor(nei, right_not_left);
     return nei;
 }
 
 void GameOfLife::linear_split()
 {
-
     // Strategy:
     n_x_nodes_ = n_nodes_;
-    //printf("     n_x_nodes_ = %d\n", n_x_nodes_);
     n_y_nodes_ = 1;
 
     int workload_per_node = 0;
@@ -197,7 +172,6 @@ void GameOfLife::linear_split()
     
     	for (int y = -1; y < field_->size_y() + 1; y ++)
     	{
-    		//printf("Y#%2d: ", y);
     		for (int x = -1; x < zero_node_workload + 1; x ++)
     		{
     			if (field_->get(x>=0? (x < field_->size_x()? x : 0)
@@ -220,23 +194,17 @@ void GameOfLife::linear_split()
     {
         (*redundant_nodes_)[0] = true;
     }
-    
-
-    
-    printf("zero_node_workload = %d\nworkload_per_node = %d\n", zero_node_workload, workload_per_node);
 
     if (workload_per_node >= 0)
     {   
         int n_actual_nodes = n_nodes_;
+        
         if (workload == 0)
         {
             workload = 1;
             n_actual_nodes = field_->size_x() - zero_node_workload;
         }
-        printf("field_->size_x() = %d\n", field_->size_x());
-        printf("workload = %d\n", workload);
-        printf("n_actual_nodes = %d\n", n_actual_nodes);
-        
+                
         for (int n = 1; n < n_actual_nodes + 1; n ++)
         {
         	jbuf[n] = new Matrix(workload + 2, field_->size_y() + 2);
@@ -247,15 +215,7 @@ void GameOfLife::linear_split()
         				 x = zero_node_workload + (n - 1) * workload - 1;
         				 x < zero_node_workload +  n      * workload + 1;
         			 loc_x ++, x ++)
-        		{
-        	
-        		/*
-        		printf(">>> Params: {x = %d, y = %d,  get(x, y) = get(%d, %d)}\n",
-        			   x, y, x>field_->size_x()-1? 0 : x, y>=0? (y < field_->size_y()? y : 0)
-        							: (field_->size_y()-1));
-        		printf(">>> Param: {workload_per_node = %d, zero_node_workload = %d}\n", workload_per_node, zero_node_workload);
-        		*/
-        	
+        		{        	
         			if (field_->get(x>=0? (x < field_->size_x()? x : 0)
         								: field_->size_x()-1,
         							y>=0? (y < field_->size_y()? y : 0)
@@ -329,9 +289,7 @@ void GameOfLife::linear_split()
         
 		int right_nei = find_neighbor(n, true);
 		int left_nei = find_neighbor(n, false);
-		
-		if (n == 1) printf("left_nei = %d\n", left_nei);
-        	
+		        	
 		neighbors[TOP] = n;
 		neighbors[BOTTOM] = n;
 		

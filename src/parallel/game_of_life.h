@@ -24,17 +24,6 @@ private:
                                                 int *neighbors,
                                                 LIFE *data);
                                                 
-	/*
-	inline int rank(int x_pos, int y_pos)
-    {
-    	return (x_pos < 0? max_x_pos_-1 : (x_pos >= max_x_pos_? 0: x_pos))
-    	      +(y_pos < 0? max_y_pos_-1 : (y_pos >= max_y_pos_? 0: y_pos)) * max_x_pos_;
-    }
-	int *get_neighbors(int rank)
-	{
-		
-	}
-	*/
 	int find_neighbor(int my_x, bool right_not_left);
     void linear_split();
     void grid_split();
@@ -56,7 +45,6 @@ public:
 	void end()
 	{
 		collect();
-		//printf("I'm (%d) here (R)!\n", 0);
 		print();
 		delete this;
 	}

@@ -62,13 +62,6 @@ private:
     
     short int count(int x, int y);
     inline void count();
-    /*
-    inline int rank(int x_pos, int y_pos)
-    {
-    	return (x_pos < 0? max_x_pos_-1 : (x_pos >= max_x_pos_? 0: x_pos))
-    	      +(y_pos < 0? max_y_pos_-1 : (y_pos >= max_y_pos_? 0: y_pos)) * max_x_pos_;
-    }
-    */
     void send();
     void receive();
 

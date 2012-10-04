@@ -19,8 +19,6 @@ Matrix load(char *fname)
 
 	y_size = (int) n_cells / x_size;
 	
-	//printf(">>> Params: {x_size = %d, y_size = %d}\n", x_size, y_size);
-
 	fclose(fp);
 
 	Matrix mat(x_size, y_size);
@@ -126,23 +124,14 @@ int main(int argc, char ** argv)
     
     for (int gen = 0; gen < node->n_generations(); gen ++)
     {        
-        //printf("I'm (%d) here (B)!\n", rank);
-        
-        //if (rank == 0) printf("\n>>> Generation %d ----------------------------------------------\n", gen + 1);
+        //if (rank == 0) printf("\n>>> Generation %d\n", gen + 1);
         
     	node->iterate();
     }
     
-
-    //printf("I'm (%d) here (A)!\n", rank);
-    
     node->end();
-    
-    //printf("I'm (%d) here (Y)!\n", rank);
 
     if (rank == 0) game->end();
-    
-    //printf("I'm (%d) here (YY)!\n", rank);
 
     MPI_Finalize();
     return 0;
