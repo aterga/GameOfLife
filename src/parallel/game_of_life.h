@@ -19,6 +19,7 @@ private:
     std::map<int, bool> *redundant_nodes_;
 
     void init();
+    void generate_random();
     inline void send_init_data(int target_rank, int x_pos,  int y_pos,
                                                 int x_size, int y_size,
                                                 int *neighbors,

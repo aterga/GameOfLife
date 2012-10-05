@@ -1,14 +1,19 @@
 #include "game_of_life.h"
 
+void GameOfLife::init()
+{
+    node_x_size_ = new std::map<std::pair<int, int>, int>;
+    node_y_size_ = new std::map<std::pair<int, int>, int>;
+    redundant_nodes_ = new std::map<int, bool>;
+}
+
 GameOfLife::GameOfLife(int X, int Y, int N_nodes, int N_generations)
 : n_nodes_ (N_nodes), n_x_nodes_ (0), n_y_nodes_ (0), n_gens_ (N_generations)
 {
     field_ = new Matrix(X, Y);
-    node_x_size_ = new std::map<std::pair<int, int>, int>;
-    node_y_size_ = new std::map<std::pair<int, int>, int>;
-    redundant_nodes_ = new std::map<int, bool>;
     
     init();
+    generate_random();
 	print();
     linear_split();
 }
@@ -17,10 +22,8 @@ GameOfLife::GameOfLife(const Matrix &mat, int N_nodes, int N_generations)
 : n_nodes_ (N_nodes), n_x_nodes_ (0), n_y_nodes_ (0), n_gens_ (N_generations)
 {
     field_ = new Matrix(mat);
-    node_x_size_ = new std::map<std::pair<int, int>, int>;
-    node_y_size_ = new std::map<std::pair<int, int>, int>;
-    redundant_nodes_ = new std::map<int, bool>;
     	
+    init();
     print();
     linear_split();
 }
@@ -33,7 +36,7 @@ GameOfLife::~GameOfLife()
     delete redundant_nodes_;
 }
 
-void GameOfLife::init()
+void GameOfLife::generate_random()
 {
     srand(time(0));
 
@@ -48,9 +51,7 @@ void GameOfLife::init()
 }
 
 void GameOfLife::collect()
-{
-    std::map<std::pair<int, int>, Node> *nodes_;
-    
+{    
     int x_inc = 0, y_inc = 0, rank = 0;
 
     Matrix *submat = NULL;
@@ -65,16 +66,14 @@ void GameOfLife::collect()
     	    			
     		int x_size = (*node_x_size_)[std::pair<int, int>(n_x, n_y)],
     			y_size = (*node_y_size_)[std::pair<int, int>(n_x, n_y)];
-    			
-    		if (x_size * y_size == 0) continue;
     		
-    		LIFE *loc_job = alloc_mass(x_size * y_size, DEAD);
+    		LIFE *loc_job = new LIFE[x_size * y_size]();
     		
     		MPI_Recv(loc_job, x_size * y_size, MPI_INT, rank, MASS + rank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     		submat = new Matrix(x_size, y_size, loc_job);
     		    	
-    		free(loc_job);
+    		delete loc_job;
     		    						
     		for (int y = 0; y < y_size; y ++)
     		{

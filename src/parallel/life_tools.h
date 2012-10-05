@@ -6,63 +6,6 @@
 
 enum LIFE { DEAD, ALIVE };
 
-LIFE *alloc_mass(int len, LIFE init_val)
-{
-    LIFE *array = (LIFE *) malloc(len * sizeof(LIFE));
-    if (array == NULL)
-    {
-        fprintf(stderr, "out of memory\n");
-        return NULL;
-    }
-
-    for (int i = 0; i < len; i ++)
-    {
-        array[i] = init_val;
-    }
-
-    return array;
-}
-
-LIFE **alloc_mass_2d(int ncolumns, int nrows, LIFE init_val)
-{
-    LIFE **array = (LIFE **) malloc(nrows * sizeof(LIFE *));
-    if (array == NULL)
-    {
-        fprintf(stderr, "out of memory\n");
-        return NULL;
-    }
-    for (int y = 0; y < nrows; y ++)
-    {
-        array[y] = (LIFE *) malloc(ncolumns * sizeof(LIFE));
-        if (array[y] == NULL)
-        {
-            fprintf(stderr, "out of memory\n");
-            return NULL;
-        }
-        for (int x = 0; x < ncolumns; x ++)
-        {
-            array[y][x] = init_val;
-        }
-    }
-    return array;
-}
-
-std::map<std::pair<int, int>, LIFE> *map_from_mass(int x_size_, int y_size_, LIFE *mass)
-{
-	std::map<std::pair<int, int>, LIFE> *res = new std::map<std::pair<int, int>, LIFE>;
-
-	for (int y = 0; y < y_size_; y ++)
-	{
-		for (int x = 0; x < x_size_; x++)
-		{
-			(*res)[std::pair<int, int>(x, y)] = mass[y * x_size_ + x];
-		}
-	}
-
-	return res;
-}
-
-
 #if 0
 			 0 1 2 3 4 5
 			0[][][][][][]

@@ -22,11 +22,6 @@ Node::Node(int rank)
 	one_row_ = neighbors_[TOP] == rank_;
 	one_col_ = neighbors_[RIGHT] == rank_;
 	
-	//if (neighbors_[TOP] == rank_) printf(">>> My (%d) top neighbor is me!\n", rank_);
-	//if (neighbors_[BOTTOM] == rank_) printf(">>> My (%d) bottom neighbor is me!\n", rank_);
-	//if (neighbors_[LEFT] == rank_) printf(">>> My (%d) left neighbor is me!\n", rank_);
-	//if (neighbors_[RIGHT] == rank_) printf(">>> My (%d) right neighbor is me!\n", rank_);
-	
 	LIFE *loc_job = new LIFE[x_size * y_size]();//alloc_mass(x_size * y_size, DEAD);
 	MPI_Recv(loc_job, x_size * y_size, MPI_INT, 0, MASS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		
