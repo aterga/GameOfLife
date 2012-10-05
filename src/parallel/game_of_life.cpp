@@ -31,7 +31,6 @@ GameOfLife::~GameOfLife()
     delete node_x_size_;
     delete node_y_size_;
     delete redundant_nodes_;
-    //printf("I'm (%d) here (RRRR)!\n", 0);
 }
 
 void GameOfLife::init()
@@ -112,19 +111,15 @@ void GameOfLife::send_init_data(int target_rank, int x_pos, int y_pos, int x_siz
     	return;	
     }
     MPI_Send(&red, 1, MPI_INT, target_rank, REDUNDANCE, MPI_COMM_WORLD);
+    
+    // Global data
+    MPI_Send(&n_gens_, 1, MPI_INT, target_rank, N_GENERATIONS, MPI_COMM_WORLD);
 
     // Job split data
-    MPI_Send(&x_pos, 1, MPI_INT, target_rank, NODE_X_POS, MPI_COMM_WORLD);
-    MPI_Send(&y_pos, 1, MPI_INT, target_rank, NODE_Y_POS, MPI_COMM_WORLD);
     MPI_Send(&x_size, 1, MPI_INT, target_rank, NODE_X_SIZE, MPI_COMM_WORLD);
     MPI_Send(&y_size, 1, MPI_INT, target_rank, NODE_Y_SIZE, MPI_COMM_WORLD);
     MPI_Send(neighbors, N_NEIGHBORS, MPI_INT, target_rank, NEIGHBORS, MPI_COMM_WORLD);
     MPI_Send(jbuf, x_size * y_size, MPI_INT, target_rank, MASS, MPI_COMM_WORLD);
-    
-    // Global data
-    MPI_Send(&n_x_nodes_, 1, MPI_INT, target_rank, NODE_MAX_X_POS, MPI_COMM_WORLD);
-    MPI_Send(&n_y_nodes_, 1, MPI_INT, target_rank, NODE_MAX_Y_POS, MPI_COMM_WORLD);
-    MPI_Send(&n_gens_, 1, MPI_INT, target_rank, N_GENERATIONS, MPI_COMM_WORLD);
 }
 
 int GameOfLife::find_neighbor(int my_x, bool right_not_left)

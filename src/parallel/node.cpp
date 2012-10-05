@@ -2,21 +2,18 @@
 
 Node::Node(int rank)
 : neighbors_ (new int[N_NEIGHBORS]()), rank_ (rank), gen_ (0), n_gens_ (0), is_redundant_ (false)
-{    
+{
     MPI_Recv(&is_redundant_, 1, MPI_INT, 0, REDUNDANCE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     
     if (is_redundant_)
 	{
 		is_redundant_ = true;
-		return;
+
+		return;		
 	}
 
-	MPI_Recv(&x_pos_, 1, MPI_INT, 0, NODE_X_POS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	MPI_Recv(&y_pos_, 1, MPI_INT, 0, NODE_Y_POS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	MPI_Recv(&max_x_pos_, 1, MPI_INT, 0, NODE_MAX_X_POS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	MPI_Recv(&max_y_pos_, 1, MPI_INT, 0, NODE_MAX_Y_POS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	MPI_Recv(&n_gens_, 1, MPI_INT, 0, N_GENERATIONS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		
+			
 	int x_size = 0, y_size = 0;
 	MPI_Recv(&x_size, 1, MPI_INT, 0, NODE_X_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	MPI_Recv(&y_size, 1, MPI_INT, 0, NODE_Y_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

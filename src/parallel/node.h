@@ -55,9 +55,7 @@ class Node {
 private:
     Matrix *field_;
     int *neighbors_;
-    int     x_pos_,     y_pos_,
-        max_x_pos_, max_y_pos_,
-        rank_, gen_, n_gens_;
+    int rank_, gen_, n_gens_;
     bool is_redundant_, one_col_, one_row_;
     
     short int count(int x, int y);
