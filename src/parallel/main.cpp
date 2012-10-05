@@ -1,3 +1,11 @@
+/* This code is in public domain. 
+ * There are no restrictions on use of any kind. 
+ *
+ * By Arshavir Ter-Gabrielyan
+ * MIPT
+ * 2012
+ * * * * * * * * * * * * * * * * * * * * * * * */
+
 #include <stdlib.h>  
 #include <math.h>
 #include <stdio.h>
