@@ -55,7 +55,6 @@ int main(int argc, char ** argv)
     argc --; argv ++;
 
     int  numtasks = 0, rank = 0, len = 0;
-    //bool i_am_redundant = false;
     char hostname[MPI_MAX_PROCESSOR_NAME];
  
     int rc = MPI_Init(&argc, &argv);
@@ -95,7 +94,7 @@ int main(int argc, char ** argv)
         	return -3;
         }
             
-        printf(" Hello, this is the Main Node\n The game would take %d generations\n", n_generations);
+        //printf(" Hello, this is the Main Node\n The game would take %d generations\n", n_generations);
 		
 		if (argv[KEY][0] != '-') // Mode 1
 		{

@@ -112,10 +112,7 @@ void GameOfLife::send_init_data(int target_rank, int x_pos, int y_pos, int x_siz
     }
     MPI_Send(&red, 1, MPI_INT, target_rank, REDUNDANCE, MPI_COMM_WORLD);
     
-    // Global data
     MPI_Send(&n_gens_, 1, MPI_INT, target_rank, N_GENERATIONS, MPI_COMM_WORLD);
-
-    // Job split data
     MPI_Send(&x_size, 1, MPI_INT, target_rank, NODE_X_SIZE, MPI_COMM_WORLD);
     MPI_Send(&y_size, 1, MPI_INT, target_rank, NODE_Y_SIZE, MPI_COMM_WORLD);
     MPI_Send(neighbors, N_NEIGHBORS, MPI_INT, target_rank, NEIGHBORS, MPI_COMM_WORLD);
@@ -139,9 +136,8 @@ void GameOfLife::linear_split()
 
     int workload_per_node = 0;
     int zero_node_workload = 0;
-    
-	std::map<int, Matrix *> jbuf;
-    
+	int n_actual_nodes = n_nodes_;
+	        
     if (n_nodes_ > field_->size_x())
     {
     	workload_per_node = (int) ( field_->size_x() / n_nodes_ );
@@ -157,122 +153,56 @@ void GameOfLife::linear_split()
     	workload_per_node = 0;
     	zero_node_workload = field_->size_x();
     }
-    
-    int workload = workload_per_node;
-
-    // n = 0
-    if (zero_node_workload > 0)
-    {
-    	jbuf[0] = new Matrix(zero_node_workload + 2, field_->size_y() + 2);
-    
-    	for (int y = -1; y < field_->size_y() + 1; y ++)
-    	{
-    		for (int x = -1; x < zero_node_workload + 1; x ++)
-    		{
-    			if (field_->get(x>=0? (x < field_->size_x()? x : 0)
-    							   : field_->size_x()-1,
-    							y>=0? (y < field_->size_y()? y : 0)
-    							   : field_->size_y()-1) == ALIVE)
-    			{
-    				 (jbuf[0])->set(x + 1, y + 1, ALIVE);
-    			} 
-    			else (jbuf[0])->set(x + 1, y + 1, DEAD);
-    		}
-    	}        
-    	    
-    	(*node_x_size_)[std::pair<int, int>(0, 0)] = zero_node_workload;
-    	(*node_y_size_)[std::pair<int, int>(0, 0)] = field_->size_y();
-    	
-        (*redundant_nodes_)[0] = false;
-    }
-    else
-    {
-        (*redundant_nodes_)[0] = true;
-    }
-
-    if (workload_per_node >= 0)
-    {   
-        int n_actual_nodes = n_nodes_;
-        
-        if (workload == 0)
-        {
-            workload = 1;
-            n_actual_nodes = field_->size_x() - zero_node_workload;
-        }
-                
-        for (int n = 1; n < n_actual_nodes + 1; n ++)
-        {
-        	jbuf[n] = new Matrix(workload + 2, field_->size_y() + 2);
-        	
-        	for (int y = -1; y < field_->size_y() + 1; y ++)
-        	{
-        		for (int loc_x = 0,
-        				 x = zero_node_workload + (n - 1) * workload - 1;
-        				 x < zero_node_workload +  n      * workload + 1;
-        			 loc_x ++, x ++)
-        		{        	
-        			if (field_->get(x>=0? (x < field_->size_x()? x : 0)
-        								: field_->size_x()-1,
-        							y>=0? (y < field_->size_y()? y : 0)
-        								: field_->size_y()-1) == ALIVE)
-        			{
-        				jbuf[n]->set(loc_x, y + 1, ALIVE);
-        			}
-        			else
-        			{
-        				jbuf[n]->set(loc_x, y + 1, DEAD);
-        			}
-        		}
-        	
-        	}
-        	    
-        	(*node_x_size_)[std::pair<int, int>(n, 0)] = workload;
-        	(*node_y_size_)[std::pair<int, int>(n, 0)] = field_->size_y();
-                	        	
-            (*redundant_nodes_)[n] = false;
-        	
-        }
-        
-        for (int n = n_actual_nodes + 1; n < n_nodes_; n ++)
-        {
-            (*redundant_nodes_)[n] = true;
-        }
-    }
-    else
-    {
-        for (int n = 1; n < n_nodes_; n ++)
-        {
-            (*redundant_nodes_)[n] = true;
-        }
-    }
-    
-    // n = 0
-    for (int n = 0; n < 1; n ++)
-    {
-    	if ((*redundant_nodes_)[0])
-    	{
-	        send_init_data(0, 0, 0, 0, 0, NULL, NULL);
-	    	continue;    
-	    }
-
-		int *neighbors = new int[N_NEIGHBORS]();
-		
-		neighbors[TOP] = 0;
-		neighbors[TOP_RIGHT] = n_x_nodes_ > 1 ? 1 : 0;
-		neighbors[RIGHT] = n_x_nodes_ > 1 ? 1 : 0;
-		neighbors[BOTTOM_RIGHT] = n_x_nodes_ > 1 ? 1 : 0;
-		neighbors[BOTTOM] = 0;
-		neighbors[BOTTOM_LEFT] = n_x_nodes_ - 1;
-		neighbors[LEFT] = n_x_nodes_ - 1;
-		neighbors[TOP_LEFT] = n_x_nodes_ - 1;
-		
-		send_init_data(0, 0, 0, zero_node_workload + 2, field_->size_y() + 2, neighbors, (jbuf[0])->data());
-		
-		delete neighbors;
-		delete jbuf[0];
+	if (workload_per_node == 0)
+	{
+		workload_per_node = 1;
+		n_actual_nodes = field_->size_x() - zero_node_workload;
 	}
-
-    for (int n = 1; n < n_nodes_; n ++)
+	
+	std::map<int, Matrix *> jbuf;
+       
+	for (int n = 0; n < n_actual_nodes + 1; n ++)
+	{
+		int workload = n == 0 ? zero_node_workload : workload_per_node;
+			
+		if (workload == 0)
+		{
+	        (*redundant_nodes_)[n] = true;
+	        continue;
+		}
+		
+		jbuf[n] = new Matrix(workload + 2, field_->size_y() + 2);
+		
+		for (int y = -1; y < field_->size_y() + 1; y ++)
+		{
+			for (int loc_x = 0,
+					 x = zero_node_workload + (n - 1) * workload - 1;
+					 x < zero_node_workload +  n      * workload + 1;
+				 loc_x ++, x ++)
+			{        	
+				if (field_->get(x>=0? (x < field_->size_x()? x : 0)
+									: field_->size_x() - 1,
+								y>=0? (y < field_->size_y()? y : 0)
+									: field_->size_y() - 1) == ALIVE)
+				
+					jbuf[n]->set(loc_x, y + 1, ALIVE);
+				else
+					jbuf[n]->set(loc_x, y + 1, DEAD);
+			}
+		}
+			
+		(*node_x_size_)[std::pair<int, int>(n, 0)] = workload;
+		(*node_y_size_)[std::pair<int, int>(n, 0)] = field_->size_y();
+							
+		(*redundant_nodes_)[n] = false;
+	}
+	
+	for (int n = n_actual_nodes + 1; n < n_nodes_; n ++)
+	{
+		(*redundant_nodes_)[n] = true;
+	}
+    
+    for (int n = 0; n < n_nodes_; n ++)
     {
     	if ((*redundant_nodes_)[n])
     	{
@@ -285,18 +215,18 @@ void GameOfLife::linear_split()
 		int right_nei = find_neighbor(n, true);
 		int left_nei = find_neighbor(n, false);
 		        	
-		neighbors[TOP] = n;
+		neighbors[   TOP] = n;
 		neighbors[BOTTOM] = n;
 		
-		neighbors[TOP_RIGHT] = right_nei;
-		neighbors[RIGHT] = right_nei;
+		neighbors[   TOP_RIGHT] = right_nei;
+		neighbors[       RIGHT] = right_nei;
 		neighbors[BOTTOM_RIGHT] = right_nei;
-
-		neighbors[BOTTOM_LEFT] = left_nei;
-		neighbors[LEFT] = left_nei;
-		neighbors[TOP_LEFT] = left_nei;
 		
-		send_init_data(n, n, 0, workload + 2, field_->size_y() + 2, neighbors, (jbuf[n])->data());
+		neighbors[BOTTOM_LEFT] = left_nei;
+		neighbors[       LEFT] = left_nei;
+		neighbors[   TOP_LEFT] = left_nei;
+		
+		send_init_data(n, n, 0, (n == 0 ? zero_node_workload : workload_per_node) + 2, field_->size_y() + 2, neighbors, jbuf[n]->data());
 	
 		delete neighbors;
 		delete jbuf[n];
