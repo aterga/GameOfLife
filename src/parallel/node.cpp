@@ -8,25 +8,28 @@ Node::Node(int rank)
     if (is_redundant_)
 	{
 		is_redundant_ = true;
-
 		return;		
 	}
 
 	MPI_Recv(&n_gens_, 1, MPI_INT, 0, N_GENERATIONS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			
-	int x_size = 0, y_size = 0;
-	MPI_Recv(&x_size, 1, MPI_INT, 0, NODE_X_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	MPI_Recv(&y_size, 1, MPI_INT, 0, NODE_Y_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	
+		
 	MPI_Recv(neighbors_, N_NEIGHBORS, MPI_INT, 0, NEIGHBORS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	one_row_ = neighbors_[TOP] == rank_;
 	one_col_ = neighbors_[RIGHT] == rank_;
 	
-	LIFE *loc_job = new LIFE[x_size * y_size]();//alloc_mass(x_size * y_size, DEAD);
-	MPI_Recv(loc_job, x_size * y_size, MPI_INT, 0, MASS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		
-	field_ = new Matrix(x_size, y_size, loc_job);
-	free(loc_job);
+	// for (int i = 0; i < N_NEIGHBORS; i ++) printf("My (%d) %d-th neighbor is: %d\n", rank_, i, neighbors_[i]);
+	
+	{
+		int x_size = 0, y_size = 0;
+		MPI_Recv(&x_size, 1, MPI_INT, 0, NODE_X_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&y_size, 1, MPI_INT, 0, NODE_Y_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	
+		LIFE *loc_job = new LIFE[x_size * y_size]();
+		MPI_Recv(loc_job, x_size * y_size, MPI_INT, 0, MASS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			
+		field_ = new Matrix(x_size, y_size, loc_job);
+		delete loc_job;
+	}
 }
 
 Node::~Node()

@@ -91,8 +91,8 @@ public:
     	
     	gen_ ++;
     	
-    	//printf(">>> Node's #%d generation %d\n", rank_, gen_);
-    	
+    	//print();
+    	    	
 		count();
 		send();
 		receive();

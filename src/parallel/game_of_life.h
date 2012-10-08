@@ -27,6 +27,8 @@ private:
                                                 
 	int find_neighbor(int my_x, bool right_not_left);
     void linear_split();
+    
+	int find_neighbor(int my_x, int my_y, NEIGHBOR nei_dir);    
     void grid_split();
     
     void collect();

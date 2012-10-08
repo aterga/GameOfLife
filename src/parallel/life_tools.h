@@ -3,8 +3,30 @@
 
 #include <stdlib.h>
 #include <map>
+#include <vector>
 
 enum LIFE { DEAD, ALIVE };
+
+typedef int num_t;
+
+std::vector<num_t> *get_prime_factors(num_t num)
+{
+        std::vector<num_t> *list = new std::vector<num_t>();
+
+        num_t start_num = num;
+
+        for (num_t i = 2; i <= num; i ++)
+        {
+                while (num % i == 0)
+                {
+                        //if (i != start_num)
+                        	list->push_back(i);
+                        num /= i;
+                }
+        }
+
+        return list;
+}
 
 #if 0
 			 0 1 2 3 4 5
