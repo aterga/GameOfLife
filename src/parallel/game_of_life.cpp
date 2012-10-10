@@ -359,13 +359,13 @@ void GameOfLife::grid_split()
 		//printf("I'm here! (n = %d, {%d %d}) -- workload (%dX%d)\n", n, node_x_coord, node_y_coord, x_workload, y_workload);
 				
 		for (int loc_y = 0,
-				 y = (node_y_coord    ) * y_workload - 1;
-				 y < (node_y_coord + 1) * y_workload + 1;
+				 y = node_y_coord * y_cells_per_node - 1;
+				 y < node_y_coord * y_cells_per_node + y_workload + 1;
 		     loc_y ++, y ++)
 		{
 			for (int loc_x = 0,
-					 x = (node_x_coord    ) * x_workload - 1;
-					 x < (node_x_coord + 1) * x_workload + 1;
+					 x = node_x_coord * x_cells_per_node - 1;
+					 x < node_x_coord * x_cells_per_node + x_workload + 1;
 				 loc_x ++, x ++)
 			{
 				if (field_->get(x>=0? (x < field_->size_x()? x : 0)
@@ -409,6 +409,8 @@ void GameOfLife::grid_split()
 		{
 			neighbors[(NEIGHBOR) i] = find_neighbor(node_x_coord, node_y_coord, (NEIGHBOR) i);
 		}
+		
+		jbuf[n]->print();
 		
 		send_init_data(n, node_x_coord, node_y_coord,
 		               2 + x_cells_per_node + (node_x_coord < n_x_nodes_ - 1 ? 0 : x_extra_job),

@@ -17,7 +17,7 @@ Node::Node(int rank)
 	one_row_ = neighbors_[TOP] == rank_;
 	one_col_ = neighbors_[RIGHT] == rank_;
 	
-	// for (int i = 0; i < N_NEIGHBORS; i ++) printf("My (%d) %d-th neighbor is: %d\n", rank_, i, neighbors_[i]);
+	//for (int i = 0; i < N_NEIGHBORS; i ++) printf("My (%d) %d-th neighbor is: %d\n", rank_, i, neighbors_[i]);
 	
 	{
 		int x_size = 0, y_size = 0;
@@ -30,6 +30,8 @@ Node::Node(int rank)
 		field_ = new Matrix(x_size, y_size, loc_job);
 		delete loc_job;
 	}
+	
+	//print();
 }
 
 Node::~Node()
