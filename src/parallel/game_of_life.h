@@ -38,9 +38,9 @@ public:
     GameOfLife(const Matrix &mat, int N_nodes, int N_generations);
 	~GameOfLife();
 
-	void print()
+	void print(const char* state = "current")
 	{
-		printf(">>> The current state of the World ");
+		printf(">>> The %s state of the World ", state);
 		field_->print();
 		printf("\n");
 	}
@@ -48,7 +48,7 @@ public:
 	void end()
 	{
 		collect();
-		print();
+		print("final");
 		delete this;
 	}
 };

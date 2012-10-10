@@ -14,7 +14,7 @@ GameOfLife::GameOfLife(int X, int Y, int N_nodes, int N_generations)
     
     init();
     generate_random();
-	print();
+	print("initial");
     //linear_split();
     grid_split();
 }
@@ -25,7 +25,7 @@ GameOfLife::GameOfLife(const Matrix &mat, int N_nodes, int N_generations)
     field_ = new Matrix(mat);
     	
     init();
-    print();
+    print("initial");
     //linear_split();
     grid_split();
 }
@@ -78,10 +78,7 @@ void GameOfLife::collect()
 						
 				delete loc_job;
     		}
-    		
-    		printf("rank = %d, n_x = %d, n_y = %d, x_inc = %d, y_inc = %d (x_size = %d, y_size = %d)\n",
-    		       rank, n_x, n_y, x_inc, y_inc, x_size, y_size);
-    		    						
+    		    		    						
     		for (int y = 0; y < y_size; y ++)
     		{
     			for (int x = 0; x < x_size; x ++)
@@ -126,7 +123,8 @@ void GameOfLife::send_init_data(int target_rank, int x_pos, int y_pos, int x_siz
 }
 
 int GameOfLife::find_neighbor(int my_x, bool right_not_left)
-{ // Geekie Coddie (old version)
+{ 
+// Geekie Coddie (old version)
     int nei = right_not_left ? (my_x + 1) % n_x_nodes_
                              : (my_x != 0 ? (my_x - 1) : n_x_nodes_ - 1);
                     
@@ -137,9 +135,6 @@ int GameOfLife::find_neighbor(int my_x, bool right_not_left)
 int GameOfLife::find_neighbor(int my_x, int my_y, NEIGHBOR nei_dir)
 {
 // Generalized Geekie Coddie
-	bool print_debug = false;
-    if (my_x == 0 && my_y == 0) print_debug = true; 
-
     switch (nei_dir)
     {
     	case TOP:
@@ -176,8 +171,6 @@ int GameOfLife::find_neighbor(int my_x, int my_y, NEIGHBOR nei_dir)
     }
                                                     
 	int nei_rank = my_y * n_x_nodes_ + my_x;
-
-    //if (print_debug) printf("nei_rank = %d, nei_dir = %d, my_x = %d, my_y = %d\n", nei_rank, nei_dir, my_x, my_y);
 	
     if ((*redundant_nodes_)[nei_rank])
     	return find_neighbor(my_x, my_y, nei_dir);
@@ -318,21 +311,11 @@ void GameOfLife::grid_split()
 		}
 	}
 
-	printf("n_nodes_ = %d\n", n_nodes_);
-	printf("prime_factors->size() = %d\n", (int) prime_factors->size());	
-	printf("x_cells_per_node = %d\n", x_cells_per_node);
-	printf("y_cells_per_node = %d\n", y_cells_per_node);
-	printf("n_x_nodes_ = %d\n", n_x_nodes_);
-	printf("n_y_nodes_ = %d\n", n_y_nodes_);
-		
 	delete prime_factors;
 
     int x_extra_job = field_->size_x() - x_cells_per_node * n_x_nodes_,
 	    y_extra_job = field_->size_y() - y_cells_per_node * n_y_nodes_;
-
-   	printf("x_extra_job = %d\n", x_extra_job);
-	printf("y_extra_job = %d\n", y_extra_job);
-	
+	    
 	int n_actual_nodes = n_nodes_;
 	
 	std::map<int, Matrix *> jbuf;
@@ -345,9 +328,6 @@ void GameOfLife::grid_split()
 		int x_workload = x_cells_per_node + (node_x_coord < n_x_nodes_ - 1 ? 0 : x_extra_job),
 		    y_workload = y_cells_per_node + (node_y_coord < n_y_nodes_ - 1 ? 0 : y_extra_job);
 		    
-	   	//printf("x_workload = %d\n", x_workload);
-		//printf("y_workload = %d\n", y_workload);
-		    
 		if (x_workload * y_workload == 0)
 		{
 	        (*redundant_nodes_)[n] = true;
@@ -355,9 +335,7 @@ void GameOfLife::grid_split()
 		}
 		
 		jbuf[n] = new Matrix(x_workload + 2, y_workload + 2);
-		
-		//printf("I'm here! (n = %d, {%d %d}) -- workload (%dX%d)\n", n, node_x_coord, node_y_coord, x_workload, y_workload);
-				
+						
 		for (int loc_y = 0,
 				 y = node_y_coord * y_cells_per_node - 1;
 				 y < node_y_coord * y_cells_per_node + y_workload + 1;
@@ -409,8 +387,6 @@ void GameOfLife::grid_split()
 		{
 			neighbors[(NEIGHBOR) i] = find_neighbor(node_x_coord, node_y_coord, (NEIGHBOR) i);
 		}
-		
-		jbuf[n]->print();
 		
 		send_init_data(n, node_x_coord, node_y_coord,
 		               2 + x_cells_per_node + (node_x_coord < n_x_nodes_ - 1 ? 0 : x_extra_job),

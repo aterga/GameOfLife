@@ -102,7 +102,7 @@ int main(int argc, char ** argv)
         	return -3;
         }
             
-        //printf(" Hello, this is the Main Node\n The game would take %d generations\n", n_generations);
+        printf("\n    The game will take %d generations\n\n", n_generations);
 		
 		if (argv[KEY][0] != '-') // Mode 1
 		{

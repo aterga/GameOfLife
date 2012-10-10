@@ -90,8 +90,6 @@ public:
     	if (is_redundant_) return;
     	
     	gen_ ++;
-    	
-    	//print();
     	    	
 		count();
 		send();

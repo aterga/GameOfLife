@@ -16,9 +16,7 @@ Node::Node(int rank)
 	MPI_Recv(neighbors_, N_NEIGHBORS, MPI_INT, 0, NEIGHBORS, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	one_row_ = neighbors_[TOP] == rank_;
 	one_col_ = neighbors_[RIGHT] == rank_;
-	
-	//for (int i = 0; i < N_NEIGHBORS; i ++) printf("My (%d) %d-th neighbor is: %d\n", rank_, i, neighbors_[i]);
-	
+		
 	{
 		int x_size = 0, y_size = 0;
 		MPI_Recv(&x_size, 1, MPI_INT, 0, NODE_X_SIZE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -30,8 +28,6 @@ Node::Node(int rank)
 		field_ = new Matrix(x_size, y_size, loc_job);
 		delete loc_job;
 	}
-	
-	//print();
 }
 
 Node::~Node()
