@@ -11,21 +11,20 @@ typedef int num_t;
 
 std::vector<num_t> *get_prime_factors(num_t num)
 {
-        std::vector<num_t> *list = new std::vector<num_t>();
-
-        num_t start_num = num;
-
-        for (num_t i = 2; i <= num; i ++)
-        {
-                while (num % i == 0)
-                {
-                        //if (i != start_num)
-                        	list->push_back(i);
-                        num /= i;
-                }
-        }
-
-        return list;
+	std::vector<num_t> *list = new std::vector<num_t>();
+	
+	num_t start_num = num;
+	
+	for (num_t i = 2; i <= num; i ++)
+	{
+		while (num % i == 0)
+		{
+			list->push_back(i);
+			num /= i;
+		}
+	}
+	
+	return list;
 }
 
 #if 0
@@ -75,7 +74,7 @@ private:
     }
 
 public:	
-	Matrix(int x_size, int y_size)
+	Matrix(int x_size = 0, int y_size = 0)
 	: x_size_ (x_size), y_size_ (y_size),
 	  data_ (x_size * y_size ? new LIFE[x_size * y_size]() : 0) 
 	{

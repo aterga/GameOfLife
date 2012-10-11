@@ -173,10 +173,13 @@ inline void GameOfLife::send_init_data(int target_rank, int x_work, int y_work, 
 	if ((*redundant_nodes_)[target_rank])
 	{
 		send_init_data(target_rank, 0, 0, NULL, NULL);
+		printf("I'm here! (A)\n");
 		return;
 	}
 	else
 	{
+		printf("target_rank = %d\n", target_rank);
+	
 		int *neighbors = new int[N_NEIGHBORS]();		    
 						
 		for (int i = 0; i < N_NEIGHBORS; i ++)
@@ -205,33 +208,47 @@ void GameOfLife::linear_split()
     {
     	workload_per_node = (int) ( field_->size_x() / n_nodes_ );
     	zero_node_workload = 0;
+    	printf("\t\tI'm here! (1)\n");
     }
     else if (n_nodes_ > 1)
     {
     	workload_per_node = (int) (field_->size_x() / n_nodes_) * (n_nodes_ / (n_nodes_ - 1));
     	zero_node_workload = field_->size_x() - (n_nodes_ - 1) * workload_per_node;
+    	printf("\t\tI'm here! (2)\n");
     }
     else
     {
-    	workload_per_node = 0;
+    	workload_per_node = 1;
     	zero_node_workload = field_->size_x();
+    	n_actual_nodes = field_->size_x() - zero_node_workload + 1;
+    	printf("\t\tI'm here! (3)\n");
     }
 	if (workload_per_node == 0)
 	{
 		workload_per_node = 1;
 		n_actual_nodes = field_->size_x() - zero_node_workload;
+    	printf("\t\tI'm here! (4)\n");
 	}
+	else if (zero_node_workload == 0)
+	{
+		n_actual_nodes --;
+    	printf("\t\tI'm here! (5)\n");
+	}
+	
+	printf("n_nodes_ = %d\nn_actual_nodes = %d\n", n_nodes_, n_actual_nodes);
 	
 	// Filling the Game's hyper torus with 2-cell-wide boarder overlap:
 	std::map<int, Matrix *> jbuf;
 	
-	for (int n = 0; n < n_actual_nodes + 1; n ++)
+	for (int n = 0; n < n_nodes_; n ++)
 	{
 		int workload = n == 0 ? zero_node_workload : workload_per_node;
 			
+		// Don't forget to init the redundant nodes as well:
 		if (workload == 0)
 		{
 	        (*redundant_nodes_)[n] = true;
+			jbuf[n] = new Matrix;
 	        continue;
 		}
 		
@@ -260,16 +277,10 @@ void GameOfLife::linear_split()
 							
 		(*redundant_nodes_)[n] = false;
 	}
-	
-	// Don't forget to init the redundant nodes as well:
-	for (int n = n_actual_nodes + 1; n < n_nodes_; n ++)
-	{
-		(*redundant_nodes_)[n] = true;
-	}
-	
+		
     // Generate per-node neighbor lists and send all per-node init data:
     for (int n = 0; n < n_nodes_; n ++)
-    {
+    {    
     	// The zero node takes the extra-work-load.
 		send_init_data(n, (n == 0 ? zero_node_workload : workload_per_node) + 2, field_->size_y() + 2, jbuf[n]->data());
 		delete jbuf[n];
