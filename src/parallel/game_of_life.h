@@ -18,14 +18,14 @@ private:
     std::map<std::pair<int, int>, int> *node_y_size_;
     std::map<int, bool> *redundant_nodes_;
 
+	inline const int node_x(const int rank) const { return       rank % n_x_nodes_; }
+	inline const int node_y(const int rank) const { return (int) rank / n_x_nodes_; }
+
     void init();
     void generate_random();
-    inline void send_init_data(int target_rank, int x_pos,  int y_pos,
-                                                int x_size, int y_size,
-                                                int *neighbors,
-                                                LIFE *data);
+    inline void send_init_data(int target_rank, int x_size, int y_size, int *neighbors, LIFE *data);
+    inline void send_init_data(int target_rank, int x_work, int y_work, LIFE *data);
                                                 
-	int find_neighbor(int my_x, bool right_not_left);
     void linear_split();
     
 	int find_neighbor(int my_x, int my_y, NEIGHBOR nei_dir);    
