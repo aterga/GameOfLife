@@ -59,47 +59,42 @@ void GameOfLife::generate_random()
 
 void GameOfLife::collect()
 {    
-    int x_inc = 0, y_inc = 0, rank = 0;
+    int x_inc = 0, y_inc = 0;
 
     Matrix *submat = NULL;
         		
     for (int n_y = 0; n_y < n_y_nodes_; n_y ++)
     {
     	for (int n_x = 0; n_x < n_x_nodes_; n_x ++)
-    	{
-    		rank = n_y * n_x_nodes_ + n_x;
-    		
-    		if ((*redundant_nodes_)[rank]) continue;
-    	    			
-    		int x_size = (*node_x_size_)[std::pair<int, int>(n_x, n_y)],
-    			y_size = (*node_y_size_)[std::pair<int, int>(n_x, n_y)];
+    	{    		
+    		if (is_redundant(n_x, n_y)) continue;
     		
     		{
-				LIFE *loc_job = new LIFE[x_size * y_size]();
+				LIFE *loc_job = new LIFE[size(n_x, n_y)]();
 				
-				MPI_Recv(loc_job, x_size * y_size, MPI_INT, rank, MASS + rank, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				MPI_Recv(loc_job, size(n_x, n_y), MPI_INT, node_rank(n_x, n_y), MASS + node_rank(n_x, n_y), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	
-				submat = new Matrix(x_size, y_size, loc_job);
+				submat = new Matrix(x_size(n_x, n_y), y_size(n_x, n_y), loc_job);
 						
 				delete loc_job;
     		}
     		    		    						
-    		for (int y = 0; y < y_size; y ++)
+    		for (int y = 0; y < y_size(n_x, n_y); y ++)
     		{
-    			for (int x = 0; x < x_size; x ++)
+    			for (int x = 0; x < x_size(n_x, n_y); x ++)
     			{
     				field_->set(x + x_inc, y + y_inc, submat->get(x, y));
     			}
     		}
     		    		
-    		if ((rank + 1) % n_x_nodes_ == 0)
+    		if ((node_rank(n_x, n_y) + 1) % n_x_nodes_ == 0)
     		{
     			x_inc = 0;
-    			y_inc += y_size;
+    			y_inc += y_size(n_x, n_y);
     		}
     		else
     		{
-    			x_inc += x_size;
+    			x_inc += x_size(n_x, n_y);
     		}
     		    		
     		delete submat;
@@ -107,7 +102,7 @@ void GameOfLife::collect()
     }
 }
 
-int GameOfLife::find_neighbor(int my_x, int my_y, NEIGHBOR nei_dir)
+inline int GameOfLife::find_neighbor(int my_x, int my_y, NEIGHBOR nei_dir)
 {
 // Generalized Geekie Coddie
     switch (nei_dir)
@@ -178,13 +173,10 @@ inline void GameOfLife::send_init_data(int target_rank, int x_work, int y_work, 
 	if ((*redundant_nodes_)[target_rank])
 	{
 		send_init_data(target_rank, 0, 0, NULL, NULL);
-		printf("I'm here! (A)\n");
 		return;
 	}
 	else
-	{
-		printf("target_rank = %d\n", target_rank);
-	
+	{	
 		int *neighbors = new int[N_NEIGHBORS]();		    
 						
 		for (int i = 0; i < N_NEIGHBORS; i ++)
@@ -213,78 +205,66 @@ void GameOfLife::linear_split()
     {
     	workload_per_node = (int) ( field_->size_x() / n_nodes_ );
     	zero_node_workload = 0;
-    	printf("\t\tI'm here! (1)\n");
     }
     else if (n_nodes_ > 1)
     {
     	workload_per_node = (int) (field_->size_x() / n_nodes_) * (n_nodes_ / (n_nodes_ - 1));
     	zero_node_workload = field_->size_x() - (n_nodes_ - 1) * workload_per_node;
-    	printf("\t\tI'm here! (2)\n");
     }
     else
     {
     	workload_per_node = 1;
     	zero_node_workload = field_->size_x();
     	n_actual_nodes = field_->size_x() - zero_node_workload + 1;
-    	printf("\t\tI'm here! (3)\n");
     }
 	if (workload_per_node == 0)
 	{
 		workload_per_node = 1;
 		n_actual_nodes = field_->size_x() - zero_node_workload;
-    	printf("\t\tI'm here! (4)\n");
 	}
 	else if (zero_node_workload == 0)
 	{
 		n_actual_nodes --;
-    	printf("\t\tI'm here! (5)\n");
 	}
-	
-	printf("n_nodes_ = %d\nn_actual_nodes = %d\n", n_nodes_, n_actual_nodes);
 	
 	// Filling the Game's hyper torus with 2-cell-wide boarder overlap:
 	std::map<int, Matrix *> jbuf;
 	
 	for (int n = 0; n < n_nodes_; n ++)
 	{
-		int workload = n == 0 ? zero_node_workload : workload_per_node;
-			
+		set_x_size(n, n == 0 ? zero_node_workload : workload_per_node);
+		set_y_size(n, y_size());	
+		
 		// Don't forget to init the redundant nodes as well:
-		if (workload == 0)
+		if (set_redundance(n))
 		{
-	        (*redundant_nodes_)[n] = true;
 			jbuf[n] = new Matrix;
 	        continue;
 		}
 		
-		jbuf[n] = new Matrix(workload + 2, field_->size_y() + 2);
+		jbuf[n] = new Matrix(x_size(n) + 2, y_size(n) + 2);
 		
-		for (int y = -1; y < field_->size_y() + 1; y ++)
+		for (int y = -1; y < y_size() + 1; y ++)
 		{
 			for (int loc_x = 0,
-					 x = zero_node_workload + (n - 1) * workload - 1;
-					 x < zero_node_workload +  n      * workload + 1;
+					 x = zero_node_workload + (n - 1) * x_size(n) - 1;
+					 x < zero_node_workload +  n      * x_size(n) + 1;
 				 loc_x ++, x ++)
 			{        	
 				jbuf[n]->set(loc_x, y + 1,
-					field_->get(x>=0? (x < field_->size_x()? x : 0)
-									: field_->size_x() - 1,
-								y>=0? (y < field_->size_y()? y : 0)
-									: field_->size_y() - 1) );
+					field_->get(x>=0? (x < x_size()? x : 0)
+									: x_size() - 1,
+								y>=0? (y < y_size()? y : 0)
+									: y_size() - 1) );
 			}
 		}
-			
-		(*node_x_size_)[std::pair<int, int>(n, 0)] = workload;
-		(*node_y_size_)[std::pair<int, int>(n, 0)] = field_->size_y();
-							
-		(*redundant_nodes_)[n] = false;
 	}
 		
     // Generate per-node neighbor lists and send all per-node init data:
     for (int n = 0; n < n_nodes_; n ++)
     {    
     	// The zero node takes the extra-work-load.
-		send_init_data(n, (n == 0 ? zero_node_workload : workload_per_node) + 2, field_->size_y() + 2, jbuf[n]->data());
+		send_init_data(n, x_size(n) + 2, y_size(n) + 2, jbuf[n]->data());
 		delete jbuf[n];
     }
 }
@@ -323,38 +303,31 @@ void GameOfLife::grid_split()
 	std::map<int, Matrix *> jbuf;
 	
 	for (int n = 0; n < n_actual_nodes; n ++)
-	{	
-		int x_workload = x_cells_per_node + (node_x(n) < n_x_nodes_ - 1 ? 0 : x_extra_job),
-		    y_workload = y_cells_per_node + (node_y(n) < n_y_nodes_ - 1 ? 0 : y_extra_job);
+	{			
+		set_x_size(n, x_cells_per_node + (node_x(n) < n_x_nodes_ - 1 ? 0 : x_extra_job));
+		set_y_size(n, y_cells_per_node + (node_y(n) < n_y_nodes_ - 1 ? 0 : y_extra_job));
 		    
-		if (x_workload * y_workload == 0)
-		{
-	        (*redundant_nodes_)[n] = true;
-	        continue;
-		}
+		if (set_redundance(n)) continue;
 		
-		jbuf[n] = new Matrix(x_workload + 2, y_workload + 2);
+		jbuf[n] = new Matrix(x_size(n) + 2, y_size(n) + 2);
 						
 		for (int loc_y = 0,
 				 y = node_y(n) * y_cells_per_node - 1;
-				 y < node_y(n) * y_cells_per_node + y_workload + 1;
+				 y < node_y(n) * y_cells_per_node + y_size(n) + 1;
 		     loc_y ++, y ++)
 		{
 			for (int loc_x = 0,
 					 x = node_x(n) * x_cells_per_node - 1;
-					 x < node_x(n) * x_cells_per_node + x_workload + 1;
+					 x < node_x(n) * x_cells_per_node + x_size(n) + 1;
 				 loc_x ++, x ++)
 			{
 				jbuf[n]->set(loc_x, loc_y, 
-					field_->get(x>=0? (x < field_->size_x()? x : 0)
-									: field_->size_x() - 1,
-								y>=0? (y < field_->size_y()? y : 0)
-									: field_->size_y() - 1) );
+					field_->get(x>=0? (x < x_size()? x : 0)
+									: x_size() - 1,
+								y>=0? (y < y_size()? y : 0)
+									: y_size() - 1) );
 			}
 		}
-			
-		(*node_x_size_)[std::pair<int, int>(node_x(n), node_y(n))] = x_workload;
-		(*node_y_size_)[std::pair<int, int>(node_x(n), node_y(n))] = y_workload;
 
 		(*redundant_nodes_)[n] = false;
 	}
@@ -369,9 +342,7 @@ void GameOfLife::grid_split()
     for (int n = 0; n < n_nodes_; n ++)
     {
     	// The last node takes the extra-work-load.
-		send_init_data(n, 2 + x_cells_per_node + (node_x(n) < n_x_nodes_ - 1 ? 0 : x_extra_job),
-		                  2 + y_cells_per_node + (node_y(n) < n_y_nodes_ - 1 ? 0 : y_extra_job),
-		                  jbuf[n]->data());
+		send_init_data(n, 2 + x_size(n), 2 + y_size(n), jbuf[n]->data());
 		delete jbuf[n];
     }	
 }
