@@ -64,7 +64,7 @@ int main(int argc, char ** argv)
 
     int  numtasks = 0, rank = 0, len = 0;
     char hostname[MPI_MAX_PROCESSOR_NAME];
- 
+     
     int rc = MPI_Init(&argc, &argv);
     if (rc != MPI_SUCCESS)
     {   
@@ -127,19 +127,16 @@ int main(int argc, char ** argv)
 		}
     }
     
-    Node *node = new Node(rank);
-    
-    for (int gen = 0; gen < node->n_generations(); gen ++)
-    {        
-        //if (rank == 0) printf("\n>>> Generation %d\n", gen + 1);
-        
-    	node->iterate();
+    {
+		Node *node = new Node(rank);
+		
+		for (int gen = 0; gen < node->n_generations(); gen ++) node->iterate();
+		
+		node->end();
     }
-    
-    node->end();
 
     if (rank == 0) game->end();
-
+        
     MPI_Finalize();
     return 0;
 }

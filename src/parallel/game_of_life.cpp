@@ -2,32 +2,37 @@
 
 void GameOfLife::init()
 {
+	n_x_nodes_ = 0;
+	n_y_nodes_ = 0;
+	start_time_ = MPI_Wtime();
+	end_time_ = 0;
+
     node_x_size_ = new std::map<std::pair<int, int>, int>;
     node_y_size_ = new std::map<std::pair<int, int>, int>;
     redundant_nodes_ = new std::map<int, bool>;
 }
 
 GameOfLife::GameOfLife(int X, int Y, int N_nodes, int N_generations)
-: n_nodes_ (N_nodes), n_x_nodes_ (0), n_y_nodes_ (0), n_gens_ (N_generations)
+: n_nodes_ (N_nodes), n_gens_ (N_generations)
 {
     field_ = new Matrix(X, Y);
     
     init();
     generate_random();
 	print("initial");
-    linear_split();
-    //grid_split();
+    //linear_split();
+    grid_split();
 }
 
 GameOfLife::GameOfLife(const Matrix &mat, int N_nodes, int N_generations)
-: n_nodes_ (N_nodes), n_x_nodes_ (0), n_y_nodes_ (0), n_gens_ (N_generations)
+: n_nodes_ (N_nodes), n_gens_ (N_generations)
 {
     field_ = new Matrix(mat);
     	
     init();
     print("initial");
-    linear_split();
-    //grid_split();
+    //linear_split();
+    grid_split();
 }
 
 GameOfLife::~GameOfLife()
@@ -261,14 +266,11 @@ void GameOfLife::linear_split()
 					 x < zero_node_workload +  n      * workload + 1;
 				 loc_x ++, x ++)
 			{        	
-				if (field_->get(x>=0? (x < field_->size_x()? x : 0)
+				jbuf[n]->set(loc_x, y + 1,
+					field_->get(x>=0? (x < field_->size_x()? x : 0)
 									: field_->size_x() - 1,
 								y>=0? (y < field_->size_y()? y : 0)
-									: field_->size_y() - 1) == ALIVE)
-				
-					jbuf[n]->set(loc_x, y + 1, ALIVE);
-				else
-					jbuf[n]->set(loc_x, y + 1, DEAD);
+									: field_->size_y() - 1) );
 			}
 		}
 			
