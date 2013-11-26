@@ -21,4 +21,4 @@ There are two different modes to use. These modes are the same for both the Seri
 
 Partnership
 -----------
-If one would create a nice GUI to cover the project, it'll be highly apreciated!
+If one would create a nice GUI to cover the project, it'll be highly appreciated!
